@@ -114,11 +114,14 @@ exitWithMessageOnError "dotnet publish failed"
 & $KUDU_SYNC_CMD -v 50 -f "$DEPLOYMENT_TEMP" -t "$DEPLOYMENT_TARGET" -n "$NEXT_MANIFEST_PATH" -p "$PREVIOUS_MANIFEST_PATH" -i ".git;.hg;.deployment;deploy.ps1"
 exitWithMessageOnError "Kudu Sync failed"
 
-if(-not(get-command iwr-tests.ps1 -ErrorAction SilentlyContinue)) {
-  find-script Iwr-tests | Install-Script -Scope CurrentUser -Force
-  Write-output "Installed iwr-tests"
+if (-not(Get-ChildItem .\build\Iwr-tests.1*\Iwr-tests.ps1 -ErrorAction SilentlyContinue)) {
+  nuget install Iwr-tests -outputdirectory build --Source https://www.powershellgallery.com/api/v2/
 }
-. Iwr-tests.ps1
+$iwrtests, $null = Get-ChildItem .\build\Iwr-tests.1*\Iwr-tests.ps1 `
+  | Sort-Object -property name -Descending `
+  | Select-Object -expandproperty Fullname
+
+. $iwrtests
 Write-out "Dot-sourced iwr-tests"
 
 ##################################################################################################################################
