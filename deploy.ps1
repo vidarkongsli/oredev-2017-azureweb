@@ -139,7 +139,7 @@ $iwrtests, $null = Get-ChildItem .\build\Iwr-tests.1*\Iwr-tests.ps1 `
 $result `
   | Should ${function:HaveStatusCode} 200 `
   | Should ${function:HaveResponseHeader} 'Content-type' 'text/html;' `
-  | Should ${function:HaveContentThatMatches} 'Vandelay\sInddustries' `
+  | Should ${function:HaveContentThatMatches} 'Vandelay\sIndustries' `
   | Out-Null
 
 ##################################################################################################################################
