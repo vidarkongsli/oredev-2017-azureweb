@@ -9,7 +9,7 @@ param(
   
   $NEXT_MANIFEST_PATH = $env:NEXT_MANIFEST_PATH,
   $PREVIOUS_MANIFEST_PATH = $env:PREVIOUS_MANIFEST_PATH,
-  $websiteHostname = "https://$WEBSITE_HOSTNAME"
+  $websiteHostname = "https://$env:WEBSITE_HOSTNAME"
 )
 $ErrorActionPreference = 'stop'
 $ProgressPreference = 'silentlycontinue'
