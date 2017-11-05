@@ -1,4 +1,4 @@
-param(
+param (
   $SCRIPT_DIR = $PSScriptRoot,
   $ARTIFACTS = "$SCRIPT_DIR\..\artifacts",
   
@@ -8,11 +8,9 @@ param(
   $DEPLOYMENT_TARGET = $env:DEPLOYMENT_TARGET,
   
   $NEXT_MANIFEST_PATH = $env:NEXT_MANIFEST_PATH,
-  $PREVIOUS_MANIFEST_PATH = $env:PREVIOUS_MANIFEST_PATH,
-  $websiteHostname = "https://$env:WEBSITE_HOSTNAME"
+  $PREVIOUS_MANIFEST_PATH = $env:PREVIOUS_MANIFEST_PATH
 )
 $ErrorActionPreference = 'stop'
-$ProgressPreference = 'silentlycontinue'
 
 # ----------------------
 # KUDU Deployment Script
@@ -39,6 +37,7 @@ exitWithMessageOnError "Missing node.js executable, please install node.js, if a
 
 # Setup
 # -----
+
 
 if ($DEPLOYMENT_SOURCE -eq $null) {
   $DEPLOYMENT_SOURCE = $SCRIPT_DIR
@@ -93,21 +92,6 @@ echo "Handling ASP.NET Core Web Application deployment."
 dotnet restore "src/vandelay.sln"
 exitWithMessageOnError "Restore failed"
 
-# Compile tests
-dotnet build .\src\vandelay.xunittests\ --configuration Release
-exitWithMessageOnError "Test compilation failed"
-
-# Run tests
-if (-not(Get-ChildItem .\build\xunit.runner.console.2* -ErrorAction SilentlyContinue)) {
-  nuget install xunit.runner.console -outputdirectory build
-}
-$xunit, $null = Get-ChildItem .\build\xunit.runner.console.2*\tools\netcoreapp2.0\xunit.console.dll `
-  | Sort-Object -property name -Descending `
-  | Select-Object -expandproperty Fullname
-
-dotnet $xunit .\src\vandelay.xunittests\bin\Release\netcoreapp2.0\vandelay.xunittests.dll
-exitWithMessageOnError "Test(s) failed"
-
 # 2. Build and publish
 dotnet publish "src/vandelay.web/vandelay.web.csproj" --output "$DEPLOYMENT_TEMP" --configuration Release
 exitWithMessageOnError "dotnet publish failed"
@@ -115,32 +99,6 @@ exitWithMessageOnError "dotnet publish failed"
 # 3. KuduSync
 & $KUDU_SYNC_CMD -v 50 -f "$DEPLOYMENT_TEMP" -t "$DEPLOYMENT_TARGET" -n "$NEXT_MANIFEST_PATH" -p "$PREVIOUS_MANIFEST_PATH" -i ".git;.hg;.deployment;deploy.ps1"
 exitWithMessageOnError "Kudu Sync failed"
-
-function GetUri($path) {
-  try {
-    $result = Invoke-WebRequest "$websiteHostname$path" `
-      -UseBasicParsing
-  } catch {
-    $result = $_.Exception.Response
-  }
-  $result
-}
-
-$result = GetUri '/'
-
-if (-not(Get-ChildItem .\build\Iwr-tests.1*\Iwr-tests.ps1 -ErrorAction SilentlyContinue)) {
-  nuget install Iwr-tests -outputdirectory build -Source https://www.powershellgallery.com/api/v2/
-}
-$iwrtests, $null = Get-ChildItem .\build\Iwr-tests.1*\Iwr-tests.ps1 `
-  | Sort-Object -property name -Descending `
-  | Select-Object -expandproperty Fullname
-. $iwrtests
-
-$result `
-  | Should ${function:HaveStatusCode} 200 `
-  | Should ${function:HaveResponseHeader} 'Content-type' 'text/html;' `
-  | Should ${function:HaveContentThatMatches} 'Vandelay\sIndustries' `
-  | Out-Null
 
 ##################################################################################################################################
 echo "Finished successfully."
