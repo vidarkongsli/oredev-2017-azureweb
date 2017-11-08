@@ -9,3 +9,6 @@ Slides are [here](./presentation/Presentation.pdf).
 * [Visual Studio Code](https://code.visualstudio.com/)
 * [Iwr-tests (PowerShell script)](http://bit.ly/iwr-tests)
 * [Kudu-to-slack-relay (Azure function)](http://bit.ly/kudu2slack)
+
+## Note
+* In the presentation, I forgot to add `$ProgressPreference='silentlycontinue` in the deploy script. This is needed for running `Invoke-WebRequest` on the server. Otherwise, it will try to show a progress bar, and the script will crash.
