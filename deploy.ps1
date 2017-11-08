@@ -12,6 +12,7 @@ param(
   $websiteHostname = "https://$env:WEBSITE_HOSTNAME"
 )
 $ErrorActionPreference = 'stop'
+$ProgressPreference = 'silentlycontinue'
 
 # ----------------------
 # KUDU Deployment Script
