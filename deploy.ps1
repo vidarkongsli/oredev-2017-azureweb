@@ -8,7 +8,8 @@ param(
   $DEPLOYMENT_TARGET = $env:DEPLOYMENT_TARGET,
   
   $NEXT_MANIFEST_PATH = $env:NEXT_MANIFEST_PATH,
-  $PREVIOUS_MANIFEST_PATH = $env:PREVIOUS_MANIFEST_PATH
+  $PREVIOUS_MANIFEST_PATH = $env:PREVIOUS_MANIFEST_PATH,
+  $websiteHostname = "https://$env:WEBHOST_NAME"
 )
 $ErrorActionPreference = 'stop'
 
@@ -113,6 +114,32 @@ exitWithMessageOnError "dotnet publish failed"
 # 3. KuduSync
 & $KUDU_SYNC_CMD -v 50 -f "$DEPLOYMENT_TEMP" -t "$DEPLOYMENT_TARGET" -n "$NEXT_MANIFEST_PATH" -p "$PREVIOUS_MANIFEST_PATH" -i ".git;.hg;.deployment;deploy.ps1"
 exitWithMessageOnError "Kudu Sync failed"
+
+function GetUri($path) {
+  try {
+    $result = Invoke-WebRequest "$websiteHostname$path" `
+      -UseBasicParsing
+  } catch {
+    $result = $_.Exception.Response
+  }
+  $result
+}
+
+$result = GetUri '/'
+
+if (-not(Get-ChildItem .\build\Iwr-tests.1*\Iwr-tests.ps1 -ErrorAction SilentlyContinue)) {
+  nuget install Iwr-tests -outputdirectory build -Source https://www.powershellgallery.com/api/v2/
+}
+$iwrtests, $null = Get-ChildItem .\build\Iwr-tests.1*\Iwr-tests.ps1 `
+  | Sort-Object -property name -Descending `
+  | Select-Object -expandproperty Fullname
+. $iwrtests
+
+$result `
+  | Should ${function:HaveStatusCode} 200 `
+  | Should ${function:HaveResponseHeader} 'Content-type' 'text/html;' `
+  | Should ${function:HaveContentThatMatches} 'Vandelay\sIndustries' `
+  | Out-Null
 
 ##################################################################################################################################
 echo "Finished successfully."
