@@ -286,6 +286,7 @@ __pycache__/
 *.btm.cs
 *.odx.cs
 *.xsd.cs
-build
-dist
-.vscode
+build/
+dist/
+.vscode/
+*.min.css
