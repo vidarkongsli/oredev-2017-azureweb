@@ -1,3 +1,16 @@
+param(
+  $SCRIPT_DIR = $PSScriptRoot,
+  $ARTIFACTS = "$SCRIPT_DIR\..\artifacts",
+  
+  $KUDU_SYNC_CMD = $env:KUDU_SYNC_CMD,
+  
+  $DEPLOYMENT_SOURCE = $env:DEPLOYMENT_SOURCE,
+  $DEPLOYMENT_TARGET = $env:DEPLOYMENT_TARGET,
+  
+  $NEXT_MANIFEST_PATH = $env:NEXT_MANIFEST_PATH,
+  $PREVIOUS_MANIFEST_PATH = $env:PREVIOUS_MANIFEST_PATH
+)
+$ErrorActionPreference = 'stop'
 
 # ----------------------
 # KUDU Deployment Script
@@ -25,16 +38,6 @@ exitWithMessageOnError "Missing node.js executable, please install node.js, if a
 # Setup
 # -----
 
-$SCRIPT_DIR = $PSScriptRoot
-$ARTIFACTS = "$SCRIPT_DIR\..\artifacts"
-
-$KUDU_SYNC_CMD = $env:KUDU_SYNC_CMD
-
-$DEPLOYMENT_SOURCE = $env:DEPLOYMENT_SOURCE
-$DEPLOYMENT_TARGET = $env:DEPLOYMENT_TARGET
-
-$NEXT_MANIFEST_PATH = $env:NEXT_MANIFEST_PATH
-$PREVIOUS_MANIFEST_PATH = $env:PREVIOUS_MANIFEST_PATH
 
 if ($DEPLOYMENT_SOURCE -eq $null) {
   $DEPLOYMENT_SOURCE = $SCRIPT_DIR
@@ -53,13 +56,13 @@ if ($NEXT_MANIFEST_PATH -eq $null) {
 }
 
 if ($KUDU_SYNC_CMD -eq $null) {
-  # Install kudu sync
-  echo "Installing Kudu Sync"
-  npm install kudusync -g --silent
-  exitWithMessageOnError "npm failed"
-
-  # Locally just running "kuduSync" would also work
-  $KUDU_SYNC_CMD = "$env:APPDATA\npm\kuduSync.cmd"
+  if (-not(get-command kudusync -ErrorAction SilentlyContinue)) {
+    # Install kudu sync
+    Write-output "Installing Kudu Sync"
+    npm install kudusync -g --silent
+    exitWithMessageOnError "npm failed"
+  }
+  $KUDU_SYNC_CMD = 'kudusync'
 }
 
 $DEPLOYMENT_TEMP = $env:DEPLOYMENT_TEMP
