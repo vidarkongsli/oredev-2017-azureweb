@@ -93,6 +93,19 @@ echo "Handling ASP.NET Core Web Application deployment."
 dotnet restore "src/vandelay.sln"
 exitWithMessageOnError "Restore failed"
 
+dotnet build "src/vandelay.xunittests/vandelay.xunittests.csproj" --configuration Release
+exitWithMessageOnError "Test compilation failed"
+
+if (-not(Get-ChildItem .\build\xunit.runner.console.2* -ErrorAction SilentlyContinue)) {
+  nuget install xunit.runner.console -outputdirectory build
+}
+$xunit, $null = Get-ChildItem .\build\xunit.runner.console.2*\tools\netcoreapp2.0\xunit.console.dll `
+  | Sort-Object -property name -Descending `
+  | Select-Object -expandproperty Fullname
+
+dotnet $xunit ".\src\vandelay.xunittests\bin\release\netcoreapp2.0\vandelay.xunittests.dll"
+exitWithMessageOnError "Test(s) failed"
+
 # 2. Build and publish
 dotnet publish "src/vandelay.web/vandelay.web.csproj" --output "$DEPLOYMENT_TEMP" --configuration Release
 exitWithMessageOnError "dotnet publish failed"
