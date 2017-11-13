@@ -1,6 +1,7 @@
 # Talk: Continuous delivery with Azure Web apps
 Code for talk at Øredev 2017.
-Slides are [here](./presentation/Presentation.pdf).
+* Slides are [here](./presentation/Presentation.pdf).
+* Video is [here](https://vimeo.com/241964274).
 
 ## Tools
 * [Project Kudu](https://github.com/projectkudu/kudu)
